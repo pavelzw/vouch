@@ -1,0 +1,9 @@
+*~
+.*.swp
+.swp
+*.log
+.DS_Store
+.vscode/
+.direnv/
+.envrc.local
+/result*
