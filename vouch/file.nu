@@ -35,6 +35,19 @@ export def open-file [
   open --raw $resolved | from td
 }
 
+# Parse a handle into platform and username components.
+#
+# Handles format: "platform:username" or just "username"
+# Returns a record with {platform: string | null, username: string}
+export def parse-handle [handle: string] {
+  let parts = $handle | str downcase | split row ":" --number 2
+  if ($parts | length) > 1 {
+    {platform: ($parts | first), username: ($parts | get 1)}
+  } else {
+    {platform: null, username: ($parts | first)}
+  }
+}
+
 # Find the default VOUCHED file by checking common locations.
 #
 # Checks for VOUCHED.td in the current directory first, then .github/VOUCHED.td.
@@ -72,15 +85,12 @@ def parse-line []: string -> record {
   let handle = $parts | first
   let details = if ($parts | length) > 1 { $parts | get 1 } else { null }
 
-  # Parse platform:username or just username
-  let handle_parts = $handle | split row ":" --number 2
-  let platform = if ($handle_parts | length) > 1 { $handle_parts | get 0 } else { null }
-  let username = if ($handle_parts | length) > 1 { $handle_parts | get 1 } else { $handle }
+  let parsed = parse-handle $handle
 
   {
     type: (if $is_denounce { "denounce" } else { "vouch" })
-    platform: $platform
-    username: $username
+    platform: $parsed.platform
+    username: $parsed.username
     details: $details
   }
 }
