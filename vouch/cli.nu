@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 
 use file.nu [default-path, "from td", open-file, "to td"]
-use lib2.nu [add-user, check-user, denounce-user]
+use lib.nu [add-user, check-user, denounce-user]
 
 # Add a user to the vouched contributors list.
 #

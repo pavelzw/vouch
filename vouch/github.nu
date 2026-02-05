@@ -1,7 +1,7 @@
 # GitHub API utilities and CLI commands for Nu scripts
 
 use file.nu [default-path, "from td", open-file, "to td"]
-use lib2.nu [add-user, check-user, denounce-user]
+use lib.nu [add-user, check-user, denounce-user]
 
 # Check if a PR author is a vouched contributor.
 #

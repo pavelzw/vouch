@@ -21,6 +21,7 @@ export use cli.nu [
   denounce
 ]
 
+# The GitHub integration commands.
 export use github.nu [
   gh-check-pr
   gh-manage-by-issue
@@ -29,7 +30,9 @@ export use github.nu [
 # This exposes the function so `open <file>.td` works.
 export use file.nu [
   "from td"
+  "to td"
 ]
 
-# The API if people want to use this as a Nu library. 
+# The API if people want to use this as a Nu library.
 export module lib.nu
+
