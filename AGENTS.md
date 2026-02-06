@@ -13,3 +13,5 @@ A file for [guiding coding agents](https://agents.md/).
 - CLI commands that do not modify external state don't need a `--dry-run` option.
 - `mod.nu` should only use and export definitions, it should not
   contain any definitions itself.
+- Run tests after every change with `nu tests/run.nu`.
+- Tests can be filtered with the `--filter` option.
