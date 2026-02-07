@@ -152,13 +152,17 @@ This PR will be closed automatically. See https://github.com/($owner)/($repo_nam
 
 # Manage contributor status via issue comments.
 #
-# This checks if a comment matches "lgtm" (vouch) or "denounce" (denounce),
-# verifies the commenter has write access, and updates the vouched list accordingly.
+# This checks if a comment matches a vouch keyword (default: "vouch") or
+# denounce keyword (default: "denounce"), verifies the commenter has write
+# access, and updates the vouched list accordingly.
 #
 # For denounce, the comment can be:
 #   - "denounce" - denounces the issue author
 #   - "denounce username" - denounces the specified user
 #   - "denounce username reason" - denounces with a reason
+#
+# Use --vouch-keyword and --denounce-keyword to customize the trigger words.
+# Multiple keywords can be specified as a list.
 #
 # Outputs a status to stdout: "vouched", "denounced", or "unchanged"
 #
@@ -170,13 +174,18 @@ This PR will be closed automatically. See https://github.com/($owner)/($repo_nam
 #   # Actually perform the action
 #   ./vouch.nu gh-manage-by-issue 123 456789 --dry-run=false
 #
+#   # Custom vouch keywords
+#   ./vouch.nu gh-manage-by-issue 123 456789 --vouch-keyword [lgtm approve]
+#
 export def gh-manage-by-issue [
   issue_id: int,           # GitHub issue number
   comment_id: int,         # GitHub comment ID
   --repo (-R): string,     # Repository in "owner/repo" format (required)
   --vouched-file: string,  # Path to vouched contributors file (default: VOUCHED.td or .github/VOUCHED.td)
-  --allow-vouch = true,   # Enable "lgtm" handling to vouch for contributors
-  --allow-denounce = true, # Enable "denounce" handling to denounce users
+  --vouch-keyword: list<string>, # Keywords that trigger vouching (default: ["vouch"])
+  --denounce-keyword: list<string>, # Keywords that trigger denouncing (default: ["denounce"])
+  --allow-vouch = true,   # Enable vouch handling
+  --allow-denounce = true, # Enable denounce handling
   --dry-run = true,        # Print what would happen without making changes
 ] {
   if ($repo | is-empty) {
@@ -202,9 +211,15 @@ export def gh-manage-by-issue [
   let commenter = $comment_data.user.login
   let comment_body = ($comment_data.body | default "" | str trim)
 
-  let is_lgtm = $allow_vouch and ($comment_body | parse -r '(?i)^\s*lgtm\b' | is-not-empty)
+  let vouch_keywords = if ($vouch_keyword | is-empty) { ["vouch"] } else { $vouch_keyword }
+  let denounce_keywords = if ($denounce_keyword | is-empty) { ["denounce"] } else { $denounce_keyword }
+
+  let vouch_pattern = $"(?i)^\\s*($vouch_keywords | str join '|')\\b"
+  let is_lgtm = $allow_vouch and ($comment_body | parse -r $vouch_pattern | is-not-empty)
+
+  let denounce_pattern = $"(?i)^\\s*($denounce_keywords | str join '|')(?:\\s+(\\S+))?(?:\\s+(.+))?$"
   let denounce_match = if $allow_denounce {
-    $comment_body | parse -r '(?i)^\s*denounce(?:\s+(\S+))?(?:\s+(.+))?$'
+    $comment_body | parse -r $denounce_pattern
   } else {
     []
   }
@@ -265,12 +280,12 @@ export def gh-manage-by-issue [
 
   if $is_denounce {
     let match = $denounce_match | first
-    let target_user = if ($match.capture0? | default "" | is-empty) {
+    let target_user = if ($match.capture1? | default "" | is-empty) {
       $issue_author
     } else {
-      $match.capture0
+      $match.capture1
     }
-    let reason = $match.capture1? | default ""
+    let reason = $match.capture2? | default ""
 
     let status = $records | check-user $target_user --default-platform github
     if $status == "denounced" {

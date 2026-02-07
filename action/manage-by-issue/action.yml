@@ -1,5 +1,5 @@
 name: Manage by Issue
-description: Manage contributor vouch status via issue comments (lgtm/denounce).
+description: Manage contributor vouch status via issue comments (vouch/denounce).
 
 inputs:
   comment-id:
@@ -13,15 +13,23 @@ inputs:
     required: false
     default: "true"
   allow-vouch:
-    description: Enable "lgtm" handling to vouch for contributors.
+    description: Enable vouch keyword handling to vouch for contributors.
     required: false
     default: "true"
+  denounce-keyword:
+    description: Comma-separated list of keywords that trigger denouncing (default: "denounce").
+    required: false
+    default: ""
   dry-run:
     description: Print what would happen without making changes.
     required: false
     default: "false"
   repo:
     description: Repository in "owner/repo" format (default: current repository).
+    required: false
+    default: ""
+  vouch-keyword:
+    description: Comma-separated list of keywords that trigger vouching (default: "vouch").
     required: false
     default: ""
   vouched-file:
@@ -46,11 +54,16 @@ runs:
       run: |
         use $"($env.GITHUB_ACTION_PATH)/../../vouch" *
 
+        let vouch_kw = "${{ inputs.vouch-keyword }}" | split row "," | each { str trim } | where { $in | is-not-empty }
+        let denounce_kw = "${{ inputs.denounce-keyword }}" | split row "," | each { str trim } | where { $in | is-not-empty }
+
         let output = (gh-manage-by-issue
           ${{ inputs.issue-id }}
           ${{ inputs.comment-id }}
           --repo "${{ inputs.repo || github.repository }}"
           --vouched-file "${{ inputs.vouched-file }}"
+          --vouch-keyword $vouch_kw
+          --denounce-keyword $denounce_kw
           --allow-vouch=${{ inputs.allow-vouch }}
           --allow-denounce=${{ inputs.allow-denounce }}
           --dry-run=${{ inputs.dry-run }}

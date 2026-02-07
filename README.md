@@ -150,10 +150,12 @@ vouch gh-manage-by-issue 123 456789 --repo owner/repo --dry-run=false
 
 Responds to comments from collaborators with write access:
 
-- `lgtm` — vouches for the issue author
+- `vouch` — vouches for the issue author
 - `denounce` — denounces the issue author
 - `denounce username` — denounces a specific user
 - `denounce username reason` — denounces with a reason
+
+Keywords are customizable via `--vouch-keyword` and `--denounce-keyword`.
 
 Outputs status: `vouched`, `denounced`, or `unchanged`.
 
