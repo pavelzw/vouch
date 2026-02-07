@@ -3,7 +3,8 @@
 Manage contributor vouch status via issue comments. When a collaborator
 with write access comments `vouch` on an issue, the issue author is added
 to the vouched contributors list. When they comment `denounce`, the user
-is denounced. The trigger keywords are configurable.
+is denounced. When they comment `unvouch`, the user is removed from the
+list entirely. The trigger keywords are configurable.
 
 ## Usage
 
@@ -45,17 +46,19 @@ jobs:
 | `issue-id`         | Yes      |           | GitHub issue number                                                    |
 | `repo`             | Yes      |           | Repository in `owner/repo` format                                      |
 | `allow-denounce`   | No       | `"true"`  | Enable denounce handling                                               |
+| `allow-unvouch`    | No       | `"true"`  | Enable unvouch handling                                                |
 | `allow-vouch`      | No       | `"true"`  | Enable vouch handling                                                  |
 | `denounce-keyword` | No       | `""`      | Comma-separated keywords that trigger denouncing (default: `denounce`) |
 | `dry-run`          | No       | `"false"` | Print what would happen without making changes                         |
+| `unvouch-keyword`  | No       | `""`      | Comma-separated keywords that trigger unvouching (default: `unvouch`)  |
 | `vouch-keyword`    | No       | `""`      | Comma-separated keywords that trigger vouching (default: `vouch`)      |
 | `vouched-file`     | No       | `""`      | Path to vouched contributors file (empty = auto-detect)                |
 
 ## Outputs
 
-| Name     | Description                                    |
-| -------- | ---------------------------------------------- |
-| `status` | Result: `vouched`, `denounced`, or `unchanged` |
+| Name     | Description                                                 |
+| -------- | ----------------------------------------------------------- |
+| `status` | Result: `vouched`, `denounced`, `unvouched`, or `unchanged` |
 
 ## Comment Syntax
 
@@ -69,6 +72,8 @@ Comments from collaborators with write access are matched:
 - **`denounce @user`** — denounces a specific user
 - **`denounce <reason>`** — denounces the issue author with a reason
 - **`denounce @user <reason>`** — denounces a specific user with a reason
+- **`unvouch`** — removes the issue author (customizable via `unvouch-keyword`)
+- **`unvouch @user`** — removes a specific user
 
 ## Commit Behavior
 

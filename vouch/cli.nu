@@ -1,7 +1,7 @@
 #!/usr/bin/env nu
 
 use file.nu [default-path, "from td", open-file, "to td"]
-use lib.nu [add-user, check-user, denounce-user]
+use lib.nu [add-user, check-user, denounce-user, remove-user]
 
 # Add a user to the vouched contributors list.
 #
@@ -136,6 +136,49 @@ export def denounce [
   if $write {
     $new_records | to td | save -f $file
     print $"Denounced ($username)"
+  } else {
+    print -n ($new_records | to td)
+  }
+}
+
+# Remove a user from the VOUCHED file entirely.
+#
+# This removes any existing entry (vouched or denounced) for the user.
+# The user will become unknown after this operation.
+#
+# Examples:
+#
+#   # Preview new file contents (default)
+#   ./vouch.nu remove someuser
+#
+#   # Write the file in-place
+#   ./vouch.nu remove someuser --write
+#
+#   # Remove with platform prefix
+#   ./vouch.nu remove github:someuser --write
+#
+export def remove [
+  username: string,          # Username to remove (supports platform:user format)
+  --default-platform: string = "", # Assumed platform for entries without explicit platform
+  --vouched-file: string,    # Path to vouched contributors file (default: VOUCHED.td or .github/VOUCHED.td)
+  --write (-w),              # Write the file in-place (default: output to stdout)
+] {
+  let file = if ($vouched_file | is-empty) {
+    let default = default-path
+    if ($default | is-empty) {
+      error make { msg: "no VOUCHED file found" }
+    }
+    $default
+  } else {
+    $vouched_file
+  }
+
+  let records = open-file $file
+  let new_records = $records | remove-user $username --default-platform $default_platform
+
+  if $write {
+    $new_records | to td | save -f $file
+    print $"Removed ($username) from vouched contributors"
   } else {
     print -n ($new_records | to td)
   }

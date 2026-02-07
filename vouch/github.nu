@@ -1,7 +1,7 @@
 # GitHub API utilities and CLI commands for Nu scripts
 
 use file.nu [default-path, "from td", init-file, open-file, "to td"]
-use lib.nu [add-user, check-user, denounce-user]
+use lib.nu [add-user, check-user, denounce-user, remove-user]
 
 # Check if a PR author is a vouched contributor.
 #
@@ -143,9 +143,10 @@ This PR will be closed automatically. See https://github.com/($owner)/($repo_nam
 
 # Manage contributor status via issue comments.
 #
-# This checks if a comment matches a vouch keyword (default: "vouch") or
-# denounce keyword (default: "denounce"), verifies the commenter has write
-# access, and updates the vouched list accordingly.
+# This checks if a comment matches a vouch keyword (default: "vouch"),
+# denounce keyword (default: "denounce"), or unvouch keyword (default:
+# "unvouch"), verifies the commenter has write access, and updates the
+# vouched list accordingly.
 #
 # For vouch, the comment can be:
 #   - "vouch" - vouches the issue author
@@ -159,10 +160,14 @@ This PR will be closed automatically. See https://github.com/($owner)/($repo_nam
 #   - "denounce <reason>" - denounces the issue author with a reason
 #   - "denounce @user <reason>" - denounces the specified user with a reason
 #
-# Use --vouch-keyword and --denounce-keyword to customize the trigger words.
-# Multiple keywords can be specified as a list.
+# For unvouch, the comment can be:
+#   - "unvouch" - removes the issue author
+#   - "unvouch @user" - removes the specified user
 #
-# Outputs a status to stdout: "vouched", "denounced", or "unchanged"
+# Use --vouch-keyword, --denounce-keyword, and --unvouch-keyword to
+# customize the trigger words. Multiple keywords can be specified as a list.
+#
+# Outputs a status to stdout: "vouched", "denounced", "unvouched", or "unchanged"
 #
 # Examples:
 #
@@ -182,8 +187,10 @@ export def gh-manage-by-issue [
   --vouched-file: string,  # Path to vouched contributors file (default: VOUCHED.td or .github/VOUCHED.td)
   --vouch-keyword: list<string>, # Keywords that trigger vouching (default: ["vouch"])
   --denounce-keyword: list<string>, # Keywords that trigger denouncing (default: ["denounce"])
+  --unvouch-keyword: list<string>, # Keywords that trigger unvouching (default: ["unvouch"])
   --allow-vouch = true,   # Enable vouch handling
   --allow-denounce = true, # Enable denounce handling
+  --allow-unvouch = true,  # Enable unvouch handling
   --dry-run = true,        # Print what would happen without making changes
 ] {
   if ($repo | is-empty) {
@@ -212,6 +219,7 @@ export def gh-manage-by-issue [
 
   let vouch_keywords = if ($vouch_keyword | is-empty) { ["vouch"] } else { $vouch_keyword }
   let denounce_keywords = if ($denounce_keyword | is-empty) { ["denounce"] } else { $denounce_keyword }
+  let unvouch_keywords = if ($unvouch_keyword | is-empty) { ["unvouch"] } else { $unvouch_keyword }
 
   let vouch_joined = ($vouch_keywords | str join '|')
   let vouch_pattern = '(?i)^\s*(' ++ $vouch_joined ++ ')(?:\s+@(\S+))?(?:\s+(.+))?$'
@@ -231,7 +239,16 @@ export def gh-manage-by-issue [
   }
   let is_denounce = ($denounce_match | is-not-empty)
 
-  if not $is_lgtm and not $is_denounce {
+  let unvouch_joined = ($unvouch_keywords | str join '|')
+  let unvouch_pattern = '(?i)^\s*(' ++ $unvouch_joined ++ ')(?:\s+@(\S+))?\s*$'
+  let unvouch_match = if $allow_unvouch {
+    $comment_body | parse -r $unvouch_pattern
+  } else {
+    []
+  }
+  let is_unvouch = ($unvouch_match | is-not-empty)
+
+  if not $is_lgtm and not $is_denounce and not $is_unvouch {
     print "Comment does not match any enabled action"
     return "unchanged"
   }
@@ -266,15 +283,6 @@ export def gh-manage-by-issue [
     let status = $records | check-user $target_user --default-platform github
     if $status == "vouched" {
       print $"($target_user) is already vouched"
-
-      if not $dry_run {
-        api "post" $"/repos/($owner)/($repo_name)/issues/($issue_id)/comments" {
-          body: $"@($target_user) is already in the vouched contributors list."
-        }
-      } else {
-        print "(dry-run) Would post 'already vouched' comment"
-      }
-
       return "unchanged"
     }
 
@@ -322,6 +330,35 @@ export def gh-manage-by-issue [
 
     print $"Denounced ($target_user)"
     return "denounced"
+  }
+
+  if $is_unvouch {
+    let match = $unvouch_match | first
+    let target_user = if ($match.capture1? | default "" | is-empty) {
+      $issue_author
+    } else {
+      $match.capture1
+    }
+
+    let status = $records | check-user $target_user --default-platform github
+    if $status == "unknown" {
+      print $"($target_user) is not in the vouched contributors list"
+      return "unchanged"
+    }
+
+    if $dry_run {
+      print $"(dry-run) Would remove ($target_user) from ($file)"
+      return "unvouched"
+    }
+
+    let new_records = $records | remove-user $target_user --default-platform github
+    $new_records | to td | save -f $file
+
+    # React to the comment with a thumbs up to indicate success, ignoring errors.
+    try { react $owner $repo_name $comment_id "+1" }
+
+    print $"Removed ($target_user) from vouched contributors"
+    return "unvouched"
   }
 }
 

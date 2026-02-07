@@ -1,5 +1,5 @@
 name: Manage by Issue
-description: "Manage contributor vouch status via issue comments (vouch/denounce)."
+description: "Manage contributor vouch status via issue comments (vouch/denounce/unvouch)."
 
 inputs:
   comment-id:
@@ -10,6 +10,10 @@ inputs:
     required: true
   allow-denounce:
     description: "Enable denounce handling to denounce users."
+    required: false
+    default: "true"
+  allow-unvouch:
+    description: "Enable unvouch handling to remove users."
     required: false
     default: "true"
   allow-vouch:
@@ -28,6 +32,10 @@ inputs:
     description: "Repository in 'owner/repo' format (default: current repository)."
     required: false
     default: ""
+  unvouch-keyword:
+    description: "Comma-separated list of keywords that trigger unvouching (default: unvouch)."
+    required: false
+    default: ""
   vouch-keyword:
     description: "Comma-separated list of keywords that trigger vouching (default: vouch)."
     required: false
@@ -39,7 +47,7 @@ inputs:
 
 outputs:
   status:
-    description: "Result status: vouched, denounced, or unchanged"
+    description: "Result status: vouched, denounced, unvouched, or unchanged"
     value: ${{ steps.run.outputs.status }}
 
 runs:
@@ -56,6 +64,7 @@ runs:
 
         let vouch_kw = "${{ inputs.vouch-keyword }}" | split row "," | each { str trim } | where { $in | is-not-empty }
         let denounce_kw = "${{ inputs.denounce-keyword }}" | split row "," | each { str trim } | where { $in | is-not-empty }
+        let unvouch_kw = "${{ inputs.unvouch-keyword }}" | split row "," | each { str trim } | where { $in | is-not-empty }
 
         let status = (gh-manage-by-issue
           ${{ inputs.issue-id }}
@@ -64,8 +73,10 @@ runs:
           --vouched-file "${{ inputs.vouched-file }}"
           --vouch-keyword $vouch_kw
           --denounce-keyword $denounce_kw
+          --unvouch-keyword $unvouch_kw
           --allow-vouch=${{ inputs.allow-vouch }}
           --allow-denounce=${{ inputs.allow-denounce }}
+          --allow-unvouch=${{ inputs.allow-unvouch }}
           --dry-run=${{ inputs.dry-run }}
         )
         $"status=($status)" | save --append $env.GITHUB_OUTPUT

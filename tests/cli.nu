@@ -104,3 +104,33 @@ export def "test cli denounce with reason" [] {
     assert equal $entry.details "AI slop"
   }
 }
+
+# --- remove ---
+
+export def "test cli remove previews by default" [] {
+  with-temp-vouched { |file|
+    let output = nu -c $'use vouch *; remove mitchellh --vouched-file ($file)'
+    assert (not ($output | str contains "mitchellh")) "preview should not contain removed user"
+    let contents = open --raw $file | from td
+    let entry = $contents | where username == "mitchellh"
+    assert equal ($entry | length) 1 "file should not be modified"
+  }
+}
+
+export def "test cli remove writes with --write" [] {
+  with-temp-vouched { |file|
+    nu -c $'use vouch *; remove mitchellh --vouched-file ($file) --write'
+    let contents = open --raw $file | from td
+    let entry = $contents | where username == "mitchellh"
+    assert equal ($entry | length) 0
+  }
+}
+
+export def "test cli remove removes denounced with --write" [] {
+  with-temp-vouched { |file|
+    nu -c $'use vouch *; remove github:badguy --vouched-file ($file) --write'
+    let contents = open --raw $file | from td
+    let entry = $contents | where username == "badguy"
+    assert equal ($entry | length) 0
+  }
+}

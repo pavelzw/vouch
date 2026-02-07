@@ -8,6 +8,7 @@ export def main [] {
   print "  add               Add a user to the vouched contributors list"
   print "  check             Check a user's vouch status"
   print "  denounce          Denounce a user by adding them to the vouched file"
+  print "  remove            Remove a user from the vouched contributors list"
   print ""
   print "GitHub integration:"
   print "  gh-check-pr         Check if a PR author is a vouched contributor"
@@ -19,6 +20,7 @@ export use cli.nu [
   add
   check
   denounce
+  remove
 ]
 
 # The GitHub integration commands.
