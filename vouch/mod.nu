@@ -29,6 +29,7 @@ export use github.nu [
 
 # This exposes the function so `open <file>.td` works.
 export use file.nu [
+  default-path
   "from td"
   init-file
   "to td"
