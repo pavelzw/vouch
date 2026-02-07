@@ -41,8 +41,7 @@ runs:
     - id: run
       shell: nu {0}
       run: |
-        const vouch_mod = (path self | path dirname | path join ../../vouch)
-        use $vouch_mod *
+        use "${{ github.action_path }}/../../vouch" *
 
         let output = (gh-check-pr
           ${{ inputs.pr-number }}
