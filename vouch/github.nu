@@ -120,8 +120,7 @@ export def gh-check-pr [
 
   let message = $"Hi @($pr_author), thanks for your interest in contributing!
 
-  This project requires that pull request authors are vouched, and
-  you are not in the list of vouched users. 
+  This project requires that pull request authors are vouched, and you are not in the list of vouched users. 
 
 This PR will be closed automatically. See https://github.com/($owner)/($repo_name)/blob/($default_branch)/CONTRIBUTING.md for more details."
 
