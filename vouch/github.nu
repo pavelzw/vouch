@@ -67,7 +67,7 @@ export def gh-check-pr [
 
   let records = try {
     let file_data = api "get" $"/repos/($owner)/($repo_name)/contents/($vouched_file)?ref=($default_branch)"
-    $file_data.content | decode base64 | decode utf-8 | from td
+    $file_data.content | str replace -a "\n" "" | decode base64 | decode utf-8 | from td
   } catch {
     []
   }
