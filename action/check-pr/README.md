@@ -30,17 +30,17 @@ jobs:
 
 ## Inputs
 
-| Name | Required | Default | Description |
-|------|----------|---------|-------------|
-| `pr-number` | Yes | | GitHub PR number |
-| `auto-close` | No | `"false"` | Automatically close PRs from unvouched or denounced users |
-| `dry-run` | No | `"false"` | Print what would happen without making changes |
-| `repo` | No | Current repository | Repository in `owner/repo` format |
-| `require-vouch` | No | `"true"` | Require users to be vouched (false = only block denounced) |
-| `vouched-file` | No | `".github/VOUCHED.td"` | Path to the vouched contributors file in the repo |
+| Name            | Required | Default                | Description                                                |
+| --------------- | -------- | ---------------------- | ---------------------------------------------------------- |
+| `pr-number`     | Yes      |                        | GitHub PR number                                           |
+| `auto-close`    | No       | `"false"`              | Automatically close PRs from unvouched or denounced users  |
+| `dry-run`       | No       | `"false"`              | Print what would happen without making changes             |
+| `repo`          | No       | Current repository     | Repository in `owner/repo` format                          |
+| `require-vouch` | No       | `"true"`               | Require users to be vouched (false = only block denounced) |
+| `vouched-file`  | No       | `".github/VOUCHED.td"` | Path to the vouched contributors file in the repo          |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
+| Name     | Description                                                |
+| -------- | ---------------------------------------------------------- |
 | `status` | Result: `skipped` (bot), `vouched`, `allowed`, or `closed` |

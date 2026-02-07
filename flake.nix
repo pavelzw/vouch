@@ -18,6 +18,7 @@
       in {
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = with pkgs; [
+            nodePackages.prettier
             nushell
           ];
         };

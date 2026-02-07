@@ -1,45 +1,45 @@
 name: Manage by Issue
-description: Manage contributor vouch status via issue comments (vouch/denounce).
+description: "Manage contributor vouch status via issue comments (vouch/denounce)."
 
 inputs:
   comment-id:
-    description: GitHub comment ID.
+    description: "GitHub comment ID."
     required: true
   issue-id:
-    description: GitHub issue number.
+    description: "GitHub issue number."
     required: true
   allow-denounce:
-    description: Enable "denounce" handling to denounce users.
+    description: "Enable denounce handling to denounce users."
     required: false
     default: "true"
   allow-vouch:
-    description: Enable vouch keyword handling to vouch for contributors.
+    description: "Enable vouch keyword handling to vouch for contributors."
     required: false
     default: "true"
   denounce-keyword:
-    description: Comma-separated list of keywords that trigger denouncing (default: "denounce").
+    description: "Comma-separated list of keywords that trigger denouncing (default: denounce)."
     required: false
     default: ""
   dry-run:
-    description: Print what would happen without making changes.
+    description: "Print what would happen without making changes."
     required: false
     default: "false"
   repo:
-    description: Repository in "owner/repo" format (default: current repository).
+    description: "Repository in 'owner/repo' format (default: current repository)."
     required: false
     default: ""
   vouch-keyword:
-    description: Comma-separated list of keywords that trigger vouching (default: "vouch").
+    description: "Comma-separated list of keywords that trigger vouching (default: vouch)."
     required: false
     default: ""
   vouched-file:
-    description: Path to the vouched contributors file (empty = auto-detect).
+    description: "Path to the vouched contributors file (empty = auto-detect)."
     required: false
     default: ""
 
 outputs:
   status:
-    description: "Result status: vouched, denounced, or unchanged."
+    description: "Result status: vouched, denounced, or unchanged"
     value: ${{ steps.run.outputs.status }}
 
 runs:

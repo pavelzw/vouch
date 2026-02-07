@@ -1,34 +1,34 @@
 name: Check PR
-description: Check if a PR author is a vouched contributor, optionally closing unvouched PRs.
+description: "Check if a PR author is a vouched contributor, optionally closing unvouched PRs."
 
 inputs:
   pr-number:
-    description: GitHub PR number.
+    description: "GitHub PR number."
     required: true
   auto-close:
-    description: Automatically close PRs from unvouched or denounced users.
+    description: "Automatically close PRs from unvouched or denounced users."
     required: false
     default: "false"
   dry-run:
-    description: Print what would happen without making changes.
+    description: "Print what would happen without making changes."
     required: false
     default: "false"
   repo:
-    description: Repository in "owner/repo" format (default: current repository).
+    description: "Repository in 'owner/repo' format (default: current repository)."
     required: false
     default: ""
   require-vouch:
-    description: Require users to be vouched (false = only block denounced).
+    description: "Require users to be vouched (false = only block denounced)."
     required: false
     default: "true"
   vouched-file:
-    description: Path to the vouched contributors file in the repo.
+    description: "Path to the vouched contributors file in the repo."
     required: false
     default: ".github/VOUCHED.td"
 
 outputs:
   status:
-    description: "Result status: skipped, vouched, allowed, or closed."
+    description: "Result status: skipped, vouched, allowed, or closed"
     value: ${{ steps.run.outputs.status }}
 
 runs:

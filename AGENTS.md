@@ -2,7 +2,13 @@
 
 A file for [guiding coding agents](https://agents.md/).
 
+## General
+
 - See `VOUCHED.example` for an example vouch file.
+- Check formatting with `prettier` after every file change.
+
+## Nu
+
 - The order of definitions in Nu files should be:
   (1) Exported definitions (alphabetically sorted)
   (2) Helper commands (exported, alphabetically sorted)

@@ -38,22 +38,22 @@ jobs:
 
 ## Inputs
 
-| Name | Required | Default | Description |
-|------|----------|---------|-------------|
-| `comment-id` | Yes | | GitHub comment ID |
-| `issue-id` | Yes | | GitHub issue number |
-| `repo` | Yes | | Repository in `owner/repo` format |
-| `allow-denounce` | No | `"true"` | Enable denounce handling |
-| `allow-vouch` | No | `"true"` | Enable vouch handling |
-| `denounce-keyword` | No | `""` | Comma-separated keywords that trigger denouncing (default: `denounce`) |
-| `dry-run` | No | `"false"` | Print what would happen without making changes |
-| `vouch-keyword` | No | `""` | Comma-separated keywords that trigger vouching (default: `vouch`) |
-| `vouched-file` | No | `""` | Path to vouched contributors file (empty = auto-detect) |
+| Name               | Required | Default   | Description                                                            |
+| ------------------ | -------- | --------- | ---------------------------------------------------------------------- |
+| `comment-id`       | Yes      |           | GitHub comment ID                                                      |
+| `issue-id`         | Yes      |           | GitHub issue number                                                    |
+| `repo`             | Yes      |           | Repository in `owner/repo` format                                      |
+| `allow-denounce`   | No       | `"true"`  | Enable denounce handling                                               |
+| `allow-vouch`      | No       | `"true"`  | Enable vouch handling                                                  |
+| `denounce-keyword` | No       | `""`      | Comma-separated keywords that trigger denouncing (default: `denounce`) |
+| `dry-run`          | No       | `"false"` | Print what would happen without making changes                         |
+| `vouch-keyword`    | No       | `""`      | Comma-separated keywords that trigger vouching (default: `vouch`)      |
+| `vouched-file`     | No       | `""`      | Path to vouched contributors file (empty = auto-detect)                |
 
 ## Outputs
 
-| Name | Description |
-|------|-------------|
+| Name     | Description                                    |
+| -------- | ---------------------------------------------- |
 | `status` | Result: `vouched`, `denounced`, or `unchanged` |
 
 ## Comment Syntax
