@@ -47,6 +47,13 @@ trusted individuals (active members of the community in any form). So,
 let's move to an explicit trust model where trusted individuals can vouch
 for others, and those vouched individuals can then contribute.
 
+## Who is Vouched?
+
+**Who** and **how** someone is vouched or denounced is left entirely up to the
+project integrating the system. Additionally, **what** consequences
+a vouched or denounced person has is also fully up to the project.
+Implement a policy that works for your project and community.
+
 ## Usage
 
 ### GitHub
