@@ -52,10 +52,10 @@ users are vouched and what they can or can't do.
 Below is a list of the actions and a brief description of their function.
 See the linked README in the action directory for full usage details.
 
-| Action                                              | Trigger               | Description                                                                                                                                                       |
-| --------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [check-pr](action/check-pr/README.md)               | `pull_request_target` | Check if a PR author is vouched. Bots and collaborators with write access are automatically allowed. Optionally auto-close PRs from unvouched or denounced users. |
-| [manage-by-issue](action/manage-by-issue/README.md) | `issue_comment`       | Let collaborators vouch or denounce users via issue comments. Updates the vouched file and commits the change.                                                    |
+| Action                                              | Trigger               | Description                                                                                                                                                                         |
+| --------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [check-pr](action/check-pr/README.md)               | `pull_request_target` | Check if a PR author is vouched on open or reopen. Bots and collaborators with write access are automatically allowed. Optionally auto-close PRs from unvouched or denounced users. |
+| [manage-by-issue](action/manage-by-issue/README.md) | `issue_comment`       | Let collaborators vouch or denounce users via issue comments. Updates the vouched file and commits the change.                                                                      |
 
 ### CLI
 

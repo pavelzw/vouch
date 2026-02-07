@@ -10,7 +10,7 @@ also blocked. Use `auto-close` to close PRs from blocked users.
 ```yaml
 on:
   pull_request_target:
-    types: [opened]
+    types: [opened, reopened]
 
 permissions:
   contents: read
