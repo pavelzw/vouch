@@ -1,0 +1,19 @@
+name: Update Floating Tags
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  update-floating-tags:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: hustcer/setup-nu@v3
+        with:
+          version: "*"
+      - run: nu .github/scripts/update-floating-tags.nu --dry-run=false
