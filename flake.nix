@@ -16,7 +16,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
       in {
         devShells.default = pkgs.mkShellNoCC {
-          nativeBuildInputs = with pkgs; [
+          packages = with pkgs; [
             nodePackages.prettier
             nushell
           ];
