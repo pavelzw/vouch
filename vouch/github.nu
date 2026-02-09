@@ -86,7 +86,7 @@ export def gh-check-pr [
 
     print "Closing PR"
 
-    let message = "This PR has been automatically closed because the author has been denounced."
+    let message = "This PR has been automatically closed because the author is explicitly blocked in the vouch list."
 
     if $dry_run {
       print "(dry-run) Would post comment and close PR"
