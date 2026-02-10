@@ -48,36 +48,24 @@ export def gh-check-pr [
   let pr_author = $pr_data.user.login
   let default_branch = $pr_data.base.repo.default_branch
 
-  if ($pr_author | str ends-with "[bot]") {
+  let result = gh-check-user $pr_author -R $repo --vouched-file $vouched_file --default-branch $default_branch
+
+  if $result.status == "bot" {
     print $"($pr_author) is a bot, skipping"
     return "skipped"
   }
 
-  let permission = try {
-    api "get" $"/repos/($owner)/($repo_name)/collaborators/($pr_author)/permission" | get permission
-  } catch {
-    null
-  }
-
-  if $permission in ["admin", "write"] {
-    print $"($pr_author) is a collaborator with ($permission) access"
+  if $result.status == "collaborator" {
+    print $"($pr_author) is a collaborator with ($result.permission) access"
     return "vouched"
   }
 
-  let records = try {
-    let file_data = api "get" $"/repos/($owner)/($repo_name)/contents/($vouched_file)?ref=($default_branch)"
-    $file_data.content | str replace -a "\n" "" | decode base64 | decode utf-8 | from td
-  } catch {
-    []
-  }
-  let status = $records | check-user $pr_author --default-platform github
-
-  if $status == "vouched" {
+  if $result.status == "vouched" {
     print $"($pr_author) is in the vouched contributors list"
     return "vouched"
   }
 
-  if $status == "denounced" {
+  if $result.status == "denounced" {
     print $"($pr_author) is denounced"
 
     if not $auto_close {
@@ -133,6 +121,133 @@ This PR will be closed automatically. See https://github.com/($owner)/($repo_nam
   }
 
   api "patch" $"/repos/($owner)/($repo_name)/pulls/($pr_number)" {
+    state: "closed"
+  }
+
+  return "closed"
+}
+
+# Check if an issue reporter is a vouched contributor.
+#
+# This checks if the issue author is:
+#   1. A bot (ends with [bot])
+#   2. A collaborator with write access
+#   3. In the vouched contributors list
+#   4. Denounced
+#
+# When --require-vouch is true (default), unvouched users are blocked.
+# When --require-vouch is false, only denounced users are blocked.
+#
+# When --auto-close is true and user is unvouched/denounced, the issue is closed.
+#
+# Outputs status: "skipped" (bot), "vouched", "allowed", or "closed".
+#
+# Examples:
+#
+#   # Check issue author status (dry run)
+#   ./vouch.nu gh-check-issue 123
+#
+#   # Auto-close unvouched issues
+#   ./vouch.nu gh-check-issue 123 --auto-close --dry-run=false
+#
+#   # Allow unvouched users, only block denounced
+#   ./vouch.nu gh-check-issue 123 --require-vouch=false --auto-close
+#
+export def gh-check-issue [
+  issue_number: int,             # GitHub issue number
+  --repo (-R): string,           # Repository in "owner/repo" format (required)
+  --vouched-file: string = ".github/VOUCHED.td", # Path to vouched contributors file in the repo
+  --require-vouch = true,        # Require users to be vouched (false = only block denounced)
+  --auto-close = false,          # Automatically close issues from unvouched/denounced users
+  --dry-run = true,              # Print what would happen without making changes
+] {
+  if ($repo | is-empty) {
+    error make { msg: "--repo is required" }
+  }
+
+  let owner = ($repo | split row "/" | first)
+  let repo_name = ($repo | split row "/" | last)
+
+  let issue_data = api "get" $"/repos/($owner)/($repo_name)/issues/($issue_number)"
+  let issue_author = $issue_data.user.login
+  let default_branch = try { $issue_data.repository.default_branch } catch {
+    let repo_data = api "get" $"/repos/($owner)/($repo_name)"
+    $repo_data.default_branch
+  }
+
+  let result = gh-check-user $issue_author -R $repo --vouched-file $vouched_file --default-branch $default_branch
+
+  if $result.status == "bot" {
+    print $"($issue_author) is a bot, skipping"
+    return "skipped"
+  }
+
+  if $result.status == "collaborator" {
+    print $"($issue_author) is a collaborator with ($result.permission) access"
+    return "vouched"
+  }
+
+  if $result.status == "vouched" {
+    print $"($issue_author) is in the vouched contributors list"
+    return "vouched"
+  }
+
+  if $result.status == "denounced" {
+    print $"($issue_author) is denounced"
+
+    if not $auto_close {
+      return "closed"
+    }
+
+    print "Closing issue"
+
+    let message = "This issue has been automatically closed because the author is explicitly blocked in the vouch list."
+
+    if $dry_run {
+      print "(dry-run) Would post comment and close issue"
+      return "closed"
+    }
+
+    api "post" $"/repos/($owner)/($repo_name)/issues/($issue_number)/comments" {
+      body: $message
+    }
+
+    api "patch" $"/repos/($owner)/($repo_name)/issues/($issue_number)" {
+      state: "closed"
+    }
+
+    return "closed"
+  }
+
+  print $"($issue_author) is not vouched"
+
+  if not $require_vouch {
+    print $"($issue_author) is allowed (char lparen)vouch not required(char rparen)"
+    return "allowed"
+  }
+
+  if not $auto_close {
+    return "closed"
+  }
+
+  print "Closing issue"
+
+  let message = $"Hi @($issue_author), thanks for your interest!
+
+  This project requires that issue reporters are vouched, and you are not in the list of vouched users. 
+
+This issue will be closed automatically. See https://github.com/($owner)/($repo_name)/blob/($default_branch)/CONTRIBUTING.md for more details."
+
+  if $dry_run {
+    print "(dry-run) Would post comment and close issue"
+    return "closed"
+  }
+
+  api "post" $"/repos/($owner)/($repo_name)/issues/($issue_number)/comments" {
+    body: $message
+  }
+
+  api "patch" $"/repos/($owner)/($repo_name)/issues/($issue_number)" {
     state: "closed"
   }
 
@@ -493,6 +608,45 @@ export def gh-manage-by-discussion [
     print $"Removed ($target_user) from vouched contributors"
     return "unvouched"
   }
+}
+
+# Check if a GitHub user is vouched for a repository.
+#
+# Returns a record with:
+#   - status: "bot", "collaborator", "vouched", "denounced", or "unknown"
+#   - permission: collaborator permission level (only set for "collaborator" status)
+def gh-check-user [
+  user: string,            # GitHub username to check
+  --repo (-R): string,     # Repository in "owner/repo" format
+  --vouched-file: string,  # Path to vouched contributors file in the repo
+  --default-branch: string, # Default branch of the repo
+] {
+  let owner = ($repo | split row "/" | first)
+  let repo_name = ($repo | split row "/" | last)
+
+  if ($user | str ends-with "[bot]") {
+    return { status: "bot" }
+  }
+
+  let permission = try {
+    api "get" $"/repos/($owner)/($repo_name)/collaborators/($user)/permission" | get permission
+  } catch {
+    null
+  }
+
+  if $permission in ["admin", "write"] {
+    return { status: "collaborator", permission: $permission }
+  }
+
+  let records = try {
+    let file_data = api "get" $"/repos/($owner)/($repo_name)/contents/($vouched_file)?ref=($default_branch)"
+    $file_data.content | str replace -a "\n" "" | decode base64 | decode utf-8 | from td
+  } catch {
+    []
+  }
+
+  let vouch_status = $records | check-user $user --default-platform github
+  { status: $vouch_status }
 }
 
 # Add a reaction emoji to a GitHub issue comment using the Reactions API.
