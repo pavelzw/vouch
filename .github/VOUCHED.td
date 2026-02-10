@@ -13,6 +13,7 @@ ditherdude
 doprz
 faukah
 meherhendi
+mitchellh
 pavelzw
 r44vc0rp
 rickhanlonii
