@@ -33,3 +33,5 @@ A file for [guiding coding agents](https://agents.md/).
 - GraphQL bodies go into `vouch/gql/*.gql`.
 - If `gh` is available, test `gh-*` functions by running them with dry-run
   against discovered content from the `mitchellh/vouch` repo.
+- When a `gh-` function is modified, check if the actions in `action/`
+  need to be updated.

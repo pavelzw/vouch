@@ -579,7 +579,8 @@ def gh-check-user [
   --default-branch: string, # Default branch of the repo
 ] {
   let repo_parts = ($repo | split row "/" | {owner: $in.0, name: $in.1})
-  let vouch_parts = ($vouched_repo | default $repo | split row "/" | {owner: $in.0, name: $in.1})
+  let vr = if ($vouched_repo | default "" | is-empty) { $repo } else { $vouched_repo }
+  let vouch_parts = ($vr | split row "/" | {owner: $in.0, name: $in.1})
 
   # All usernames that end with [bot] are bots and we allow it. The `[]`
   # characters aren't valid at the time of writing this for user accounts.
