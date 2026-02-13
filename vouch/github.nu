@@ -325,11 +325,6 @@ export def gh-manage-by-issue [
   }
 
   let file = resolve-vouched-file $vouched_file
-  let allowed_roles = if ($roles | is-empty) {
-    ["admin", "maintain", "write", "triage"]
-  } else {
-    $roles
-  }
 
   let owner = ($repo | split row "/" | first)
   let repo_name = ($repo | split row "/" | last)
@@ -351,22 +346,8 @@ export def gh-manage-by-issue [
     return "unchanged"
   }
 
-  let perm_data = try {
-    api "get" $"/repos/($owner)/($repo_name)/collaborators/($commenter)/permission"
-  } catch {
-    print $"($commenter) does not have collaborator access"
-    return "unchanged"
-  }
-
-  let has_access = if ($roles | is-empty) {
-    (($perm_data.role_name in $allowed_roles)
-      or ($perm_data.permission in ["admin", "write"]))
-  } else {
-    $perm_data.role_name in $allowed_roles
-  }
-
-  if not $has_access {
-    print $"($commenter) does not have sufficient access \(($perm_data.role_name))"
+  if not (can-manage $commenter $owner $repo_name --roles $roles) {
+    print $"($commenter) does not have sufficient access"
     return "unchanged"
   }
 
@@ -445,11 +426,6 @@ export def gh-manage-by-discussion [
   }
 
   let file = resolve-vouched-file $vouched_file
-  let allowed_roles = if ($roles | is-empty) {
-    ["admin", "maintain", "write", "triage"]
-  } else {
-    $roles
-  }
 
   let owner = ($repo | split row "/" | first)
   let repo_name = ($repo | split row "/" | last)
@@ -477,22 +453,8 @@ export def gh-manage-by-discussion [
     return "unchanged"
   }
 
-  let perm_data = try {
-    api "get" $"/repos/($owner)/($repo_name)/collaborators/($commenter)/permission"
-  } catch {
-    print $"($commenter) does not have collaborator access"
-    return "unchanged"
-  }
-
-  let has_access = if ($roles | is-empty) {
-    (($perm_data.role_name in $allowed_roles)
-      or ($perm_data.permission in ["admin", "write"]))
-  } else {
-    $perm_data.role_name in $allowed_roles
-  }
-
-  if not $has_access {
-    print $"($commenter) does not have sufficient access \(($perm_data.role_name))"
+  if not (can-manage $commenter $owner $repo_name --roles $roles) {
+    print $"($commenter) does not have sufficient access"
     return "unchanged"
   }
 
@@ -741,4 +703,59 @@ def get-token [] {
 
   $env.GITHUB_TOKEN = (gh auth token | str trim)
   $env.GITHUB_TOKEN
+}
+
+# Check if a given GitHub user can manage vouch status for a vouch
+# file in the given target repository.
+#
+# If `--roles` is specified, only allow users with those specific
+# roles to manage vouch status. If `--roles` is NOT explicitly
+# specified to a non-empty list, this will default to 
+# [admin, maintain, write, triage]. Additionally, the legacy
+# permissions [admin, write] are always allowed. If roles is explicitly
+# specified, legacy permissions are ignored unless they are explicitly 
+# specified.
+#
+# If `--legacy-permissions` is specified, also check the legacy
+# `permission` field of the permission GitHub REST API. If this is not
+# specified, the default value is [admin, write] only if `--roles` is
+# not set.
+export def can-manage [
+  username: string, # Username of the GitHub user to check
+  repo_owner: string, # Repository owner (e.g., "mitchellh") for vouch file
+  repo_name: string, # Repository name (e.g., "vouch") for vouch file
+  --roles: list<string>, # Roles to allow
+  --legacy-permissions: list<string>, # Legacy permissions to allow 
+] {
+  let real_roles = $roles | default --empty [
+    admin
+    maintain
+    write
+    triage
+  ]
+
+  # For legacy perms, we always take the flag value if its non-empty.
+  # If it is empty, we set a default only if roles is empty.
+  let real_legacy_perms = if (not ($legacy_permissions | is-empty)) {
+    $legacy_permissions
+  } else if (
+    $roles |
+    default --empty [] |
+    is-empty
+  ) {
+    [admin, write]
+  } else {
+    []
+  }
+
+  let api_perm = try {
+    api "get" $"/repos/($repo_owner)/($repo_name)/collaborators/($username)/permission"
+  } catch {
+    return false
+  }
+
+  return (
+    ($api_perm.role_name in $real_roles)
+      or ($api_perm.permission in $real_legacy_perms)
+  )
 }

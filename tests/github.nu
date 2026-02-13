@@ -1,6 +1,7 @@
 use std/assert
 
 use ../vouch/github.nu [
+  can-manage
   gh-check-issue
   gh-check-pr
   gh-manage-by-issue
@@ -229,4 +230,75 @@ export def "test slow gh-check-issue with vouched-repo" [] {
       --dry-run=true
   )
   assert equal $result "vouched"
+}
+
+# --- can-manage ---
+
+export def "test slow can-manage owner has access" [] {
+  skip-without-gh
+
+  # mitchellh is the repo owner (admin)
+  let result = (
+    can-manage "mitchellh" "mitchellh" "vouch"
+  )
+  assert equal $result true
+}
+
+export def "test slow can-manage non-collaborator denied" [] {
+  skip-without-gh
+
+  # cipz is not a collaborator on mitchellh/vouch
+  let result = (
+    can-manage "mitchellh-nope" "mitchellh" "vouch"
+  )
+  assert equal $result false
+}
+
+export def "test slow can-manage with restrictive roles" [] {
+  skip-without-gh
+
+  # mitchellh is admin; restrict to only "maintain"
+  # so admin should be denied
+  let result = (
+    can-manage "mitchellh" "mitchellh" "vouch"
+      --roles [maintain]
+  )
+  assert equal $result false
+}
+
+export def "test slow can-manage with matching role" [] {
+  skip-without-gh
+
+  # mitchellh is admin; include "admin" in roles
+  let result = (
+    can-manage "mitchellh" "mitchellh" "vouch"
+      --roles [admin]
+  )
+  assert equal $result true
+}
+
+export def "test slow can-manage legacy-permissions override" [] {
+  skip-without-gh
+
+  # With roles set (no legacy default) but
+  # legacy-permissions explicitly including "admin"
+  let result = (
+    can-manage "mitchellh" "mitchellh" "vouch"
+      --roles [maintain]
+      --legacy-permissions [admin]
+  )
+  assert equal $result true
+}
+
+export def "test slow can-manage empty legacy with roles" [] {
+  skip-without-gh
+
+  # When roles is set, legacy perms default to [].
+  # With non-matching roles and no legacy fallback,
+  # access should be denied.
+  let result = (
+    can-manage "mitchellh" "mitchellh" "vouch"
+      --roles [triage]
+  )
+  assert equal $result false
 }
