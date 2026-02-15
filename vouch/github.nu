@@ -391,7 +391,12 @@ export def gh-manage-by-issue [
     --dry-run=$dry_run)
 
   if $result.acted and $commit {
-    commit-and-push $file --message $commit_message
+    (commit-and-push $file
+      --message $commit_message
+      --retry 3
+      --retry-action {
+        gh-apply-action $parsed.action $target_user $parsed.reason $file
+      })
     try { react $owner $repo_name $comment_id "+1" }
   }
 
@@ -534,7 +539,12 @@ export def gh-manage-by-discussion [
     --dry-run=$dry_run)
 
   if $result.acted and $commit {
-    commit-and-push $file --message $commit_message
+    (commit-and-push $file
+      --message $commit_message
+      --retry 3
+      --retry-action {
+        gh-apply-action $parsed.action $target_user $parsed.reason $file
+      })
     try { react-graphql $comment_node_id "+1" }
   }
 
