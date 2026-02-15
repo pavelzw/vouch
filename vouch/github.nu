@@ -783,9 +783,16 @@ def open-pr [
   }
 
   if $merge_immediately {
-    api "put" $"/repos/($owner)/($repo)/pulls/($pr.number)/merge" {
+    api "put" (
+      $"/repos/($owner)/($repo)/pulls/($pr.number)/merge"
+    ) {
       merge_method: "squash",
     }
+
+    # Delete the head branch after merge
+    api "delete" (
+      $"/repos/($owner)/($repo)/git/refs/heads/($branch)"
+    )
   }
 }
 
@@ -836,6 +843,7 @@ def api [
     "post" => { http post $url --headers $headers --content-type application/json $body },
     "patch" => { http patch $url --headers $headers --content-type application/json $body },
     "put" => { http put $url --headers $headers --content-type application/json $body },
+    "delete" => { http delete $url --headers $headers },
     _ => { error make { msg: $"Unsupported HTTP method: ($method)" } }
   }
 }
